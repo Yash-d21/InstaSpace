@@ -31,7 +31,8 @@ def save_analysis(vision_data, cost_estimates=None, business_classification=None
         
         # Insert into 'analyses' table
         response = supabase.table("analyses").insert(data).execute()
+        print(f"✅ SUCCESS: Analysis for {data.get('room_type')} synced to Supabase.")
         return response
     except Exception as e:
-        print(f"Error saving to Supabase: {e}")
+        print(f"❌ ERROR: Failed to sync to Supabase: {e}")
         return None

@@ -38,10 +38,14 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 @app.get("/health", include_in_schema=False)
 @app.get("/api/v1/health")
 def health_check():
+    from utils.supabase_handler import supabase
     api_key_status = "configured" if os.getenv("GOOGLE_API_KEY") else "missing"
+    supabase_status = "connected" if supabase else "missing/not_configured"
+    
     return {
         "status": "online",
         "api_key": api_key_status,
+        "supabase": supabase_status,
         "environment": "vercel" if os.getenv("VERCEL") else "local"
     }
 
