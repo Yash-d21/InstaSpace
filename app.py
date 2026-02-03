@@ -1,10 +1,11 @@
 import os
 import shutil
 import json
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Header
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Header, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from typing import Optional
+from utils.supabase_handler import save_analysis
 
 # Load env variables AT THE TOP
 load_dotenv()
@@ -79,6 +80,7 @@ def estimate_get_info():
 @app.post("/api/v1/estimate")
 @app.post("/estimate", include_in_schema=False)
 async def estimate_design_cost(
+    background_tasks: BackgroundTasks,
     provider: str = "gemini", 
     file: UploadFile = File(...),
     x_gemini_api_key: Optional[str] = Header(None)
@@ -106,6 +108,9 @@ async def estimate_design_cost(
             
         catalog = load_catalog()
         estimates = calculate_estimate(vision_data, catalog)
+        
+        # Save to Supabase in background
+        background_tasks.add_task(save_analysis, vision_data, estimates)
         
         return {
             "vision_analysis": vision_data,
@@ -153,6 +158,7 @@ def full_analysis_get_info():
 @app.post("/api/v1/full-analysis")
 @app.post("/full-analysis", include_in_schema=False)
 async def full_analysis(
+    background_tasks: BackgroundTasks,
     provider: str = "gemini", 
     file: UploadFile = File(...),
     x_gemini_api_key: Optional[str] = Header(None)
@@ -179,6 +185,9 @@ async def full_analysis(
         catalog = load_catalog()
         estimates = calculate_estimate(vision_data, catalog)
         classification = classify_project(vision_data, api_key_override=x_gemini_api_key)
+
+        # Save to Supabase in background
+        background_tasks.add_task(save_analysis, vision_data, estimates, classification)
 
         return {
             "vision_analysis": vision_data,
