@@ -17,12 +17,19 @@ from agent.vision_reader import analyze_image
 from utils.pricing_utils import calculate_estimate
 
 def load_catalog():
-    catalog_path = os.path.join(os.path.dirname(__file__), "data", "catalog_prices.json")
+    # Attempt absolute path relative to this file
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    catalog_path = os.path.join(base_path, "data", "catalog_prices.json")
+    
+    # Fallback for Vercel/api structure if not found
+    if not os.path.exists(catalog_path):
+        catalog_path = os.path.join(base_path, "..", "data", "catalog_prices.json")
+
     try:
         with open(catalog_path, "r") as f:
             return json.load(f)
     except Exception as e:
-        print(f"Error loading catalog: {e}")
+        print(f"Error loading catalog at {catalog_path}: {e}")
         return {}
 
 def print_estimates(estimates):
